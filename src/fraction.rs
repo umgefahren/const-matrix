@@ -26,41 +26,12 @@ macro_rules! fraction_op {
     };
 }
 
-#[derive(Debug, Clone, Copy, Eq, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct Fraction {
     num: i64,
     den: i64,
 }
 
-impl PartialEq for Fraction {
-    fn eq(&self, other: &Self) -> bool {
-        if self.num == other.num && self.den == other.den {
-            true
-        } else {
-            let l = self.shorten();
-            let r = other.shorten();
-            l.num == r.num && l.den == r.den
-        }
-    }
-
-    fn ne(&self, other: &Self) -> bool {
-        if self.num == other.num && self.den == other.den {
-            false
-        } else {
-            let l = self.shorten();
-            let r = other.shorten();
-            l.num != r.num || l.den != r.den
-        }
-    }
-}
-
-impl PartialOrd for Fraction {
-    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
-        let l_f: f64 = f64::from(self);
-        let r_f: f64 = f64::from(other);
-        l_f.partial_cmp(&r_f)
-    }
-}
 
 #[derive(Debug)]
 pub enum ParseFractionError {
@@ -95,14 +66,22 @@ impl Display for Fraction {
 
 
 impl Fraction {
+    /// the one fraction (1/1)
     pub const ONE: Self = Self { num: 1, den: 1 };
 
+    /// the zero fraction (0/1)
     pub const ZERO: Self = Self { num: 0, den: 1 };
 
+    /// construct a new fraction with (`num` / `den`)
     pub fn new(num: impl Into<i64>, den: NonZeroI64) -> Self {
         unsafe { Self::new_unchecked(num, den) }
     }
 
+    /// construct a new fraction with (`num` / `den`)
+    ///
+    /// # Safety
+    ///
+    /// creates new fraction without checking wether the denominator is zero.
     pub unsafe fn new_unchecked(num: impl Into<i64>, den: impl Into<i64>) -> Self {
         Self {
             num: num.into(),
@@ -110,6 +89,11 @@ impl Fraction {
         }.shorten()
     }
 
+    /// construct a new fraction with (`num` / `den`)
+    ///
+    /// # Safety
+    /// 
+    /// creates new fraction without checking wether the denominator is zero.
     pub const unsafe fn new_const_unchecked(num: i64, den: i64) -> Self {
         Self {
             num,
@@ -117,6 +101,7 @@ impl Fraction {
         }
     }
 
+    /// construct a new fraction with (`int` / 1)
     pub const fn new_int(int: i64) -> Self {
         Self {
             num: int,
@@ -124,6 +109,7 @@ impl Fraction {
         }
     }
 
+    /// converts the fraction to an integer, when the denominator is 1
     pub const fn to_int(self) -> Option<i64> {
         let shortended = self.shorten();
         if shortended.den == 1 {
@@ -132,8 +118,9 @@ impl Fraction {
         None
     }
 
+    /// shortens the fraction
     #[inline]
-    const fn shorten(mut self) -> Self {
+    pub const fn shorten(mut self) -> Self {
         let cd = gcd_i64(self.num, self.den);
         self.num /= cd;
         self.den /= cd;
@@ -141,13 +128,15 @@ impl Fraction {
     }
 
 
+    /// inverse the fraction
     #[inline]
-    const fn inverse(mut self) -> Self {
+    pub const fn inverse(mut self) -> Self {
         (self.num, self.den) = (self.den, self.num);
         self
     }
 
 
+    /// multiplication that can happen at compile time
     pub const fn const_mul(self, rhs: Self) -> Self {
         let num = self.num * rhs.num;
         let den = self.den * rhs.den;
@@ -158,7 +147,8 @@ impl Fraction {
         ret = ret.shorten();
         ret
     }
-    
+   
+    /// addition that can happen at compile time
     pub const fn const_add(self, rhs: Self) -> Self {
         fraction_op!(self, rhs, +).shorten()
     }

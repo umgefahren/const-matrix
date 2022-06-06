@@ -150,7 +150,7 @@ mod tests {
     #[test]
     #[allow(non_upper_case_globals)]
     fn new_int_mult() {
-        let a_content = [
+        const a_content: [[i64; 3]; 2] = [
             [
                 1, 2, 3
             ],
@@ -159,7 +159,7 @@ mod tests {
             ]
         ];
 
-        let b_content = [
+        const b_content: [[i64; 2]; 3] = [
             [
                 1, 2
             ],
@@ -171,9 +171,9 @@ mod tests {
             ]
         ];
         
-        let a = StaticMatrix::new_int(a_content);
-        let b = StaticMatrix::new_int(b_content);
-        let c = b.mult(&a);
+        const a: StaticMatrix<2, 3> = StaticMatrix::new_int(a_content);
+        const b: StaticMatrix<3, 2> = StaticMatrix::new_int(b_content);
+        const c: StaticMatrix<3, 3> = b.mult(&a);
         let expected_c_content = [
             [
                 5, 8, 11
