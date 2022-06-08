@@ -152,6 +152,10 @@ impl Fraction {
         ret = ret.shorten();
         ret
     }
+
+    pub const fn const_div(self, rhs: Self) -> Self {
+        (self.const_mul(rhs.inverse())).shorten()
+    }
    
     /// addition that can happen at compile time
     pub const fn const_add(self, rhs: Self) -> Self {
@@ -358,6 +362,13 @@ mod tests {
     extern crate alloc;
 
     use super::Fraction;
+
+    #[test]
+    fn inverse() {
+        let a = Fraction::new(1, NonZeroI64::new(2).unwrap());
+        let b = Fraction::new(2, NonZeroI64::new(1).unwrap());
+        assert_eq!(a, b.inverse());
+    }
 
     #[test]
     fn sub() {

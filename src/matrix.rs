@@ -121,6 +121,18 @@ impl<const HEIGHT: usize, const WIDTH: usize> StaticMatrix<HEIGHT, WIDTH> {
         });
         ret
     }
+
+    pub const fn sub(&self, rhs: &StaticMatrix<HEIGHT, WIDTH>) -> StaticMatrix<HEIGHT, WIDTH> {
+        let mut ret = Self::ZERO;
+        const_for!(for i in 0,HEIGHT => {
+            const_for!(for j in 0,WIDTH => {
+                let self_side = self.0[i][j];
+                let right_side = rhs.0[i][j];
+                ret.0[i][j] = self_side.const_sub(right_side);
+            });
+        });
+        ret
+    }
 }
 
 
@@ -149,7 +161,7 @@ mod tests {
     #[test]
     fn column() {
         extern crate std;
-        let identity = StaticMatrix::<4, 4>::identity().unwrap();
+        let identity = StaticMatrix::<4, 4>::IDENTITY;
         let column = identity.column(0);
         let expected = [Fraction::ONE, Fraction::ZERO, Fraction::ZERO, Fraction::ZERO];
         assert_eq!(column, expected);
@@ -157,7 +169,7 @@ mod tests {
 
     #[test]
     fn mult_ident() {
-        let identity = StaticMatrix::<4, 4>::identity().unwrap();
+        let identity = StaticMatrix::<4, 4>::IDENTITY;
         let res = identity.mult(&identity);
         assert_eq!(res, identity);
     }
