@@ -12,16 +12,16 @@ macro_rules! const_swap {
 macro_rules! fraction_op {
     ($l:ident, $r:ident, $o:tt) => {
         {
-        let lcm = lcm_i64($l.den, $r.den);
-        let l_m = $l.den / lcm;
-        let r_m = $r.den / lcm;
-        let l_num = l_m * $l.num;
-        let r_num = r_m * $r.num;
-        let num = l_num $o r_num;
-        Fraction {
-            num,
-            den: lcm,
-        }
+            let lcm = lcm_i64($l.den, $r.den);
+            let l_m = $l.den / lcm;
+            let r_m = $r.den / lcm;
+            let l_num = l_m * $l.num;
+            let r_num = r_m * $r.num;
+            let num = l_num $o r_num;
+            Fraction {
+                num,
+                den: lcm,
+            }
         }
     };
 }
@@ -118,6 +118,11 @@ impl Fraction {
         None
     }
 
+    pub fn to_float(self) -> f64 {
+        let shortened = self.shorten();
+        (shortened.num as f64) / (shortened.den as f64)
+    }
+
     /// shortens the fraction
     #[inline]
     pub const fn shorten(mut self) -> Self {
@@ -151,6 +156,10 @@ impl Fraction {
     /// addition that can happen at compile time
     pub const fn const_add(self, rhs: Self) -> Self {
         fraction_op!(self, rhs, +).shorten()
+    }
+
+    pub const fn const_sub(self, rhs: Self) -> Self {
+        fraction_op!(self, rhs, -).shorten()
     }
 }
 
@@ -214,6 +223,7 @@ impl MulAssign for Fraction {
 
 impl Div for Fraction {
     type Output = Self;
+    #[allow(clippy::suspicious_arithmetic_impl)]
     fn div(self, rhs: Self) -> Self::Output {
         (self * rhs.inverse()).shorten()
     }

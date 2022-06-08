@@ -2,16 +2,6 @@ use core::{ops::{Index, IndexMut}, fmt::Debug};
 
 use crate::fraction::Fraction;
 
-#[macro_export]
-macro_rules! matrix {
-    (
-        $(
-            [$($y:literal),*]
-        )+,
-    ) => {
-        
-    };
-}
 
 macro_rules! const_for {
     (for $i:ident in $l:expr,$u:expr => $b:block) => {
@@ -20,7 +10,7 @@ macro_rules! const_for {
             $b
             $i += 1;
         }
-    };
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -35,6 +25,16 @@ impl<const HEIGHT: usize, const WIDTH: usize> Debug for StaticMatrix<HEIGHT, WID
         }
         Ok(())
     }
+}
+
+impl<const LENGTH: usize> StaticMatrix<LENGTH, LENGTH> {
+    pub const IDENTITY: Self = {
+        let mut ret = Self::ZERO;
+        const_for!(for i in 0,LENGTH => {
+            ret.0[i][i] = Fraction::new_int(1);
+        });
+        ret
+    };
 }
 
 
@@ -69,15 +69,19 @@ impl<const HEIGHT: usize, const WIDTH: usize> StaticMatrix<HEIGHT, WIDTH> {
         Some(ret)
     }
 
-    pub const fn identity() -> Option<Self> { 
-        if HEIGHT != WIDTH {
-            return None;
-        }
-        let mut ret = Self::ZERO;
-        const_for!(for i in 0,WIDTH => {
-            ret.0[i][i] = Fraction::ONE;
+    pub fn to_float_num(&self) -> [[f64; WIDTH]; HEIGHT] {
+        let mut ret = [[0.0f64; WIDTH]; HEIGHT];
+        const_for!(for i in 0,HEIGHT => {
+            const_for!(for j in 0,WIDTH => {
+                let fraction_res = self.0[i][j].to_float();
+                ret[i][j] = fraction_res;
+            });
         });
-        Some(ret)
+        ret
+    }
+
+    pub const fn to_frac_num(&self) -> [[Fraction; WIDTH]; HEIGHT] {
+        self.0
     }
 
     pub const fn column(&self, index: usize) -> [Fraction; HEIGHT] {
@@ -106,6 +110,17 @@ impl<const HEIGHT: usize, const WIDTH: usize> StaticMatrix<HEIGHT, WIDTH> {
         ret
     }
 
+    pub const fn add(&self, rhs: &StaticMatrix<HEIGHT, WIDTH>) -> StaticMatrix<HEIGHT, WIDTH> {
+        let mut ret = Self::ZERO;
+        const_for!(for i in 0,HEIGHT => {
+            const_for!(for j in 0,WIDTH => {
+                let self_side = self.0[i][j];
+                let right_side = rhs.0[i][j];
+                ret.0[i][j] = self_side.const_add(right_side);
+            });
+        });
+        ret
+    }
 }
 
 
